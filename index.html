@@ -4,6 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VocabTrainer</title>
+
+<div class="container" id="page-login" style="display:none">
+    <div class="home-hero">
+      <h1>vocab<span style="color:var(--accent)">.</span>trainer</h1>
+      <p>Accedi o registrati per iniziare</p>
+    </div>
+
+    <div id="auth-tabs" style="display:flex;gap:8px;margin-bottom:20px">
+      <button onclick="switchAuthTab('login')" id="tab-login" class="btn-start" style="margin:0">Accedi</button>
+      <button onclick="switchAuthTab('register')" id="tab-register" class="btn-start" style="margin:0;background:var(--surface);border:1px solid var(--border);color:var(--muted)">Registrati</button>
+    </div>
+
+    <input id="auth-email" class="answer-input" type="email" placeholder="Email" style="margin-bottom:10px;text-align:left;padding-left:16px">
+    <input id="auth-password" class="answer-input" type="password" placeholder="Password" style="margin-bottom:10px;text-align:left;padding-left:16px">
+    <div id="auth-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+    <button class="btn-start" id="auth-submit" onclick="handleAuth()">Accedi</button>
+
+    <div style="text-align:center;margin-top:20px">
+      <div style="color:var(--muted);font-size:12px;margin-bottom:12px">oppure</div>
+      <button onclick="loginWithGoogle()" class="btn-start" style="background:var(--surface);border:1px solid var(--border);color:var(--text)">
+        🔵 Continua con Google
+      </button>
+    </div>
+  </div>
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -444,6 +469,7 @@
     <button class="active" onclick="showPage('home')">Home</button>
     <button onclick="showPage('quiz')">Quiz</button>
     <button onclick="showPage('db')">Database</button>
+    <button onclick="showPage('profile')">Profilo</button>
   </div>
 </header>
 
@@ -509,6 +535,56 @@ const db = createClient(
   'sb_publishable_Qwouq208mA727Y9iPLhikA_9RIE2RCg'
   );
 
+  let currentUser = null;
+
+  // Controlla se l'utente è già loggato al caricamento
+  db.auth.getSession().then(({ data: { session } }) => {
+    currentUser = session?.user ?? null;
+    if (currentUser) showPage('home');
+    else showPage('login');
+  });
+
+  // Ascolta i cambiamenti di stato auth
+  db.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user ?? null;
+  });
+
+  let authMode = 'login';
+
+  function switchAuthTab(mode) {
+    authMode = mode;
+    document.getElementById('auth-submit').textContent = mode === 'login' ? 'Accedi' : 'Registrati';
+    document.getElementById('tab-login').style.background = mode === 'login' ? 'var(--accent)' : 'var(--surface)';
+    document.getElementById('tab-register').style.background = mode === 'register' ? 'var(--accent)' : 'var(--surface)';
+  }
+
+  async function handleAuth() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value.trim();
+    const errEl = document.getElementById('auth-error');
+    errEl.style.display = 'none';
+
+    const fn = authMode === 'login'
+      ? db.auth.signInWithPassword({ email, password })
+      : db.auth.signUp({ email, password });
+
+    const { error } = await fn;
+    if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
+    showPage('home');
+  }
+
+  async function loginWithGoogle() {
+    await db.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    showPage('login');
+  }
+
 // Carica tutte le parole
 async function loadWords() {
   const { data, error } = await db.from('words').select('*').order('id');
@@ -553,6 +629,7 @@ const CAT_COLORS = {
   academic: { bg: '#0e1a28', text: '#4a9fe0', border: '#1a3a58' },
 };
 
+//Da eliminare
 const DEFAULT_WORDS = [
   { id: 1, eng: 'milestone', ita: 'traguardo, pietra miliare', ctx: 'We hit a major milestone this sprint', cat: 'tech' },
   { id: 2, eng: 'leverage', ita: 'sfruttare, fare leva su', ctx: 'We can leverage this data to improve the model', cat: 'business' },
@@ -705,9 +782,46 @@ function nextWord() {
   renderQuiz();
 }
 
-function showResults(area) {
+async function loadProfile() {
+  if (!currentUser) return;
+
+  // Storico sessioni
+  const { data: sessions } = await db.from('sessions')
+    .select('*').eq('user_id', currentUser.id).order('played_at', { ascending: false });
+
+  // Parole più sbagliate
+  const { data: wrongWords } = await db.from('wrong_answers')
+    .select('count, word_id, words(eng, ita, cat)')
+    .eq('user_id', currentUser.id)
+    .order('count', { ascending: false })
+    .limit(10);
+
+  renderProfile(sessions, wrongWords);
+}
+
+async function showResults(area) {
   const tot = quizResults.length;
   const ok = quizResults.filter(r => r.ok).length;
+
+  // Salva sessione
+  if (currentUser) {
+    await db.from('sessions').insert({
+      user_id: currentUser.id,
+      mode: selectedMode,
+      correct: ok,
+      wrong: tot - ok,
+      total: tot
+    });
+
+    // Aggiorna parole sbagliate
+    const wrongWords = quizResults.filter(r => !r.ok);
+    for (const r of wrongWords) {
+      await db.from('wrong_answers')
+        .upsert({ user_id: currentUser.id, word_id: r.word.id, count: 1, last_seen: new Date() },
+                 { onConflict: 'user_id,word_id', ignoreDuplicates: false });
+    }
+  }
+
   const pct = tot > 0 ? Math.round(ok/tot*100) : 0;
   const rows = quizResults.map(r => `
     <div class="result-row">
