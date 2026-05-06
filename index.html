@@ -522,8 +522,14 @@ async function addWord() {
   const ctx = document.getElementById('f-ctx').value.trim();
   const cat = document.getElementById('f-cat').value;
   if (!eng || !ita) return;
+  
+  console.log('Sto cercando di salvare:', { eng, ita, ctx, cat });
 
   const { data, error } = await db.from('words').insert({ eng, ita, ctx, cat }).select();
+
+  console.log('Risposta Supabase - data:', data);
+  console.log('Risposta Supabase - error:', error);
+  
   if (!error) words.push(data[0]);
   renderDB();
 }
