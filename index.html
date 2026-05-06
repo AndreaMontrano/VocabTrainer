@@ -5,29 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VocabTrainer</title>
 
-<div class="container" id="page-login" style="display:none">
-    <div class="home-hero">
-      <h1>vocab<span style="color:var(--accent)">.</span>trainer</h1>
-      <p>Accedi o registrati per iniziare</p>
-    </div>
-
-    <div id="auth-tabs" style="display:flex;gap:8px;margin-bottom:20px">
-      <button onclick="switchAuthTab('login')" id="tab-login" class="btn-start" style="margin:0">Accedi</button>
-      <button onclick="switchAuthTab('register')" id="tab-register" class="btn-start" style="margin:0;background:var(--surface);border:1px solid var(--border);color:var(--muted)">Registrati</button>
-    </div>
-
-    <input id="auth-email" class="answer-input" type="email" placeholder="Email" style="margin-bottom:10px;text-align:left;padding-left:16px">
-    <input id="auth-password" class="answer-input" type="password" placeholder="Password" style="margin-bottom:10px;text-align:left;padding-left:16px">
-    <div id="auth-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
-    <button class="btn-start" id="auth-submit" onclick="handleAuth()">Accedi</button>
-
-    <div style="text-align:center;margin-top:20px">
-      <div style="color:var(--muted);font-size:12px;margin-bottom:12px">oppure</div>
-      <button onclick="loginWithGoogle()" class="btn-start" style="background:var(--surface);border:1px solid var(--border);color:var(--text)">
-        🔵 Continua con Google
-      </button>
-    </div>
-  </div>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -473,6 +450,30 @@
   </div>
 </header>
 
+<div class="container" id="page-login" style="display:none">
+  <div class="home-hero">
+    <h1>vocab<span style="color:var(--accent)">.</span>trainer</h1>
+    <p>Accedi o registrati per iniziare</p>
+  </div>
+
+  <div id="auth-tabs" style="display:flex;gap:8px;margin-bottom:20px">
+    <button onclick="switchAuthTab('login')" id="tab-login" class="btn-start" style="margin:0">Accedi</button>
+    <button onclick="switchAuthTab('register')" id="tab-register" class="btn-start" style="margin:0;background:var(--surface);border:1px solid var(--border);color:var(--muted)">Registrati</button>
+  </div>
+
+  <input id="auth-email" class="answer-input" type="email" placeholder="Email" style="margin-bottom:10px;text-align:left;padding-left:16px">
+  <input id="auth-password" class="answer-input" type="password" placeholder="Password" style="margin-bottom:10px;text-align:left;padding-left:16px">
+  <div id="auth-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+  <button class="btn-start" id="auth-submit" onclick="handleAuth()">Accedi</button>
+
+  <div style="text-align:center;margin-top:20px">
+    <div style="color:var(--muted);font-size:12px;margin-bottom:12px">oppure</div>
+    <button onclick="loginWithGoogle()" class="btn-start" style="background:var(--surface);border:1px solid var(--border);color:var(--text)">
+      🔵 Continua con Google
+    </button>
+  </div>
+</div>
+
 <div class="container" id="page-home">
   <div class="home-hero">
     <h1>Level up your <span style="color:var(--accent)">English</span></h1>
@@ -521,6 +522,18 @@
       <button class="btn-save" onclick="addWord()">Salva</button>
       <button class="btn-cancel" onclick="toggleAddForm()">Annulla</button>
     </div>
+  </div>
+
+  <div class="container" id="page-profile" style="display:none">
+    <div class="home-hero">
+      <h1>Il tuo <span style="color:var(--accent)">profilo</span></h1>
+      <p id="profile-email" style="color:var(--muted)"></p>
+    </div>
+    <div id="profile-content"></div>
+    <button class="btn-start" onclick="logout()" 
+      style="background:var(--surface);border:1px solid var(--border);color:var(--danger);margin-top:24px">
+      Logout
+    </button>
   </div>
 
   <div class="cat-filter" id="cat-filter"></div>
@@ -662,14 +675,16 @@ function save() {
 }
 
 function showPage(p) {
-  ['home','quiz','db'].forEach(x => {
-    document.getElementById('page-'+x).style.display = x === p ? 'block' : 'none';
+  ['home', 'quiz', 'db', 'login', 'profile'].forEach(x => {
+    const el = document.getElementById('page-' + x);
+    if (el) el.style.display = x === p ? 'block' : 'none';
   });
-  document.querySelectorAll('.nav-tabs button').forEach((b,i) => {
-    b.classList.toggle('active', ['home','quiz','db'][i] === p);
+  document.querySelectorAll('.nav-tabs button').forEach((b, i) => {
+    b.classList.toggle('active', ['home', 'quiz', 'db', 'profile'][i] === p);
   });
-  if(p === 'home') renderHome();
-  if(p === 'db') renderDB();
+  if (p === 'home') renderHome();
+  if (p === 'db') { renderDB(); loadWords(); }
+  if (p === 'profile') loadProfile();
 }
 
 function renderHome() {
@@ -679,6 +694,50 @@ function renderHome() {
     <div class="stat-card"><div class="num">${total}</div><div class="lbl">Parole</div></div>
     <div class="stat-card"><div class="num">${acc}%</div><div class="lbl">Accuracy</div></div>
     <div class="stat-card"><div class="num">${stats.sessions}</div><div class="lbl">Sessioni</div></div>
+  `;
+}
+
+function renderProfile(sessions, wrongWords) {
+  const email = currentUser?.email || '';
+  document.getElementById('profile-email').textContent = email;
+
+  const totalSessions = sessions?.length || 0;
+  const totalCorrect = sessions?.reduce((s, r) => s + r.correct, 0) || 0;
+  const totalWrong = sessions?.reduce((s, r) => s + r.wrong, 0) || 0;
+  const acc = totalCorrect + totalWrong > 0
+    ? Math.round(totalCorrect / (totalCorrect + totalWrong) * 100) : 0;
+
+  const sessionRows = sessions?.map(s => `
+    <div class="result-row">
+      <div class="dot ok"></div>
+      <div style="flex:1;font-size:13px">${new Date(s.played_at).toLocaleDateString('it-IT')}</div>
+      <div style="font-size:12px;color:var(--muted)">${s.mode}</div>
+      <div style="font-family:var(--mono);font-size:13px;margin-left:auto">
+        <span style="color:var(--success)">${s.correct}</span>
+        <span style="color:var(--muted)">/${s.total}</span>
+      </div>
+    </div>
+  `).join('') || '<div class="empty-state">Nessuna sessione ancora</div>';
+
+  const wrongRows = wrongWords?.map(w => `
+    <div class="result-row">
+      <div class="dot ko"></div>
+      <div style="font-family:var(--mono);font-weight:700;min-width:120px">${w.words?.eng}</div>
+      <div style="color:var(--muted);font-size:13px;flex:1">${w.words?.ita}</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--danger)">×${w.count}</div>
+    </div>
+  `).join('') || '<div class="empty-state">Nessun errore registrato</div>';
+
+  document.getElementById('profile-content').innerHTML = `
+    <div class="stats-row" style="margin-bottom:20px">
+      <div class="stat-card"><div class="num">${totalSessions}</div><div class="lbl">Sessioni</div></div>
+      <div class="stat-card"><div class="num">${acc}%</div><div class="lbl">Accuracy</div></div>
+      <div class="stat-card"><div class="num">${totalCorrect}</div><div class="lbl">Corrette</div></div>
+    </div>
+    <p style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:10px">STORICO SESSIONI</p>
+    <div class="results-list" style="margin-bottom:24px">${sessionRows}</div>
+    <p style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:10px">PAROLE PIÙ SBAGLIATE</p>
+    <div class="results-list">${wrongRows}</div>
   `;
 }
 
