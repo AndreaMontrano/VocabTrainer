@@ -504,7 +504,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const { createClient } = supabase;
-const db = createClient('https://nykqupvssdsmbbqpsqup.supabase.co/rest/v1/', 'sb_publishable_Qwouq208mA727Y9iPLhikA_9RIE2RCg');
+const db = createClient(
+  'https://nykqupvssdsmbbqpsqup.supabase.co', 
+  'sb_publishable_Qwouq208mA727Y9iPLhikA_9RIE2RCg'
+  );
 
 // Carica tutte le parole
 async function loadWords() {
