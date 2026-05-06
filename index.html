@@ -444,7 +444,6 @@
   <div class="logo">vocab<span>.</span>trainer</div>
   <div class="nav-tabs">
     <button class="active" onclick="showPage('home')">Home</button>
-    <button onclick="showPage('quiz')">Quiz</button>
     <button onclick="showPage('db')">Database</button>
     <button onclick="showPage('profile')">Profilo</button>
   </div>
@@ -641,25 +640,9 @@ const CAT_COLORS = {
   academic: { bg: '#0e1a28', text: '#4a9fe0', border: '#1a3a58' },
 };
 
-//Da eliminare
-const DEFAULT_WORDS = [
-  { id: 1, eng: 'milestone', ita: 'traguardo, pietra miliare', ctx: 'We hit a major milestone this sprint', cat: 'tech' },
-  { id: 2, eng: 'leverage', ita: 'sfruttare, fare leva su', ctx: 'We can leverage this data to improve the model', cat: 'business' },
-  { id: 3, eng: 'threshold', ita: 'soglia', ctx: 'The accuracy crossed the 95% threshold', cat: 'tech' },
-  { id: 4, eng: 'break the ice', ita: 'rompere il ghiaccio', ctx: 'He told a joke to break the ice', cat: 'idiom' },
-  { id: 5, eng: 'throughput', ita: 'produttività, capacità di elaborazione', ctx: 'The system throughput dropped under load', cat: 'tech' },
-  { id: 6, eng: 'paradigm', ita: 'paradigma', ctx: 'A new paradigm for distributed computing', cat: 'academic' },
-  { id: 7, eng: 'bottleneck', ita: 'collo di bottiglia', ctx: 'The database is the main bottleneck', cat: 'tech' },
-  { id: 8, eng: 'nail it', ita: 'farcela alla grande, centrare in pieno', ctx: 'He really nailed the presentation', cat: 'idiom' },
-  { id: 9, eng: 'bandwidth', ita: 'larghezza di banda / tempo disponibile', ctx: 'I don\'t have the bandwidth for this right now', cat: 'tech' },
-  { id: 10, eng: 'stakeholder', ita: 'portatore di interesse, parte interessata', ctx: 'We need to align all stakeholders', cat: 'business' },
-  { id: 11, eng: 'trade-off', ita: 'compromesso, bilanciamento', ctx: 'There\'s always a trade-off between speed and accuracy', cat: 'general' },
-  { id: 12, eng: 'on the fence', ita: 'indeciso, incerto', ctx: 'I\'m still on the fence about this approach', cat: 'idiom' },
-];
 
-let words = JSON.parse(localStorage.getItem('vocab_words') || 'null') || DEFAULT_WORDS;
-let nextId = Math.max(...words.map(w => w.id), 0) + 1;
-let stats = JSON.parse(localStorage.getItem('vocab_stats') || '{"correct":0,"wrong":0,"sessions":0}');
+let words = [];
+let stats = { correct: 0, wrong: 0, sessions: 0 };
 
 let selectedMode = null;
 let quizWords = [];
@@ -668,10 +651,6 @@ let quizResults = [];
 let addFormOpen = false;
 let selectedCat = 'all';
 
-function save() {
-  localStorage.setItem('vocab_words', JSON.stringify(words));
-  localStorage.setItem('vocab_stats', JSON.stringify(stats));
-}
 
 function showPage(p) {
   ['home', 'quiz', 'db', 'login', 'profile'].forEach(x => {
@@ -682,20 +661,29 @@ function showPage(p) {
   document.querySelector('header').style.display = p === 'login' ? 'none' : 'flex';
   
   document.querySelectorAll('.nav-tabs button').forEach((b, i) => {
-    b.classList.toggle('active', ['home', 'quiz', 'db', 'profile'][i] === p);
+    b.classList.toggle('active', ['home', 'db', 'profile'][i] === p);
   });
   if (p === 'home') { renderHome(); loadWords(); }
   if (p === 'db') { renderDB(); loadWords(); }
   if (p === 'profile') loadProfile();
 }
 
-function renderHome() {
+async function renderHome() {
   const total = words.length;
-  const acc = stats.correct + stats.wrong > 0 ? Math.round(stats.correct / (stats.correct + stats.wrong) * 100) : 0;
+  let acc = 0;
+  if (currentUser) {
+    const { data } = await db.from('sessions')
+      .select('correct, wrong')
+      .eq('user_id', currentUser.id);
+    if (data?.length) {
+      const tot_c = data.reduce((s, r) => s + r.correct, 0);
+      const tot_w = data.reduce((s, r) => s + r.wrong, 0);
+      acc = tot_c + tot_w > 0 ? Math.round(tot_c / (tot_c + tot_w) * 100) : 0;
+    }
+  }
   document.getElementById('stats-row').innerHTML = `
     <div class="stat-card"><div class="num">${total}</div><div class="lbl">Parole</div></div>
     <div class="stat-card"><div class="num">${acc}%</div><div class="lbl">Accuracy</div></div>
-    <div class="stat-card"><div class="num">${stats.sessions}</div><div class="lbl">Sessioni</div></div>
   `;
 }
 
@@ -759,8 +747,6 @@ function startQuiz() {
   quizWords = shuffle(words).slice(0, Math.min(10, words.length));
   quizIndex = 0;
   quizResults = [];
-  stats.sessions++;
-  save();
   showPage('quiz');
   renderQuiz();
 }
@@ -835,7 +821,6 @@ function checkAnswer() {
 
   quizResults.push({ word: w, ok, userAns });
   if (ok) stats.correct++; else stats.wrong++;
-  save();
 }
 
 function nextWord() {
@@ -939,28 +924,6 @@ function toggleAddForm() {
   document.getElementById('add-form').classList.toggle('open', addFormOpen);
   if (addFormOpen) document.getElementById('f-eng').focus();
 }
-
-/*function addWord() {
-  const eng = document.getElementById('f-eng').value.trim();
-  const ita = document.getElementById('f-ita').value.trim();
-  const ctx = document.getElementById('f-ctx').value.trim();
-  const cat = document.getElementById('f-cat').value;
-  if (!eng || !ita) { alert('Inglese e italiano sono obbligatori!'); return; }
-  words.push({ id: nextId++, eng, ita, ctx, cat });
-  save();
-  ['f-eng','f-ita','f-ctx'].forEach(id => document.getElementById(id).value = '');
-  toggleAddForm();
-  renderDB();
-  renderHome();
-}*/
-
-/*function deleteWord(id) {
-  if (!confirm('Eliminare questa parola?')) return;
-  words = words.filter(w => w.id !== id);
-  save();
-  renderDB();
-  renderHome();
-}*/
 
 loadWords();
 </script>
