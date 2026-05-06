@@ -524,20 +524,19 @@
     </div>
   </div>
 
-  <div class="container" id="page-profile" style="display:none">
-    <div class="home-hero">
-      <h1>Il tuo <span style="color:var(--accent)">profilo</span></h1>
-      <p id="profile-email" style="color:var(--muted)"></p>
-    </div>
-    <div id="profile-content"></div>
-    <button class="btn-start" onclick="logout()" 
-      style="background:var(--surface);border:1px solid var(--border);color:var(--danger);margin-top:24px">
-      Logout
-    </button>
-  </div>
-
   <div class="cat-filter" id="cat-filter"></div>
   <div class="word-list" id="word-list"></div>
+</div>
+<div class="container" id="page-profile" style="display:none">
+  <div class="home-hero">
+    <h1>Il tuo <span style="color:var(--accent)">profilo</span></h1>
+    <p id="profile-email" style="color:var(--muted)"></p>
+  </div>
+  <div id="profile-content"></div>
+  <button class="btn-start" onclick="logout()" 
+    style="background:var(--surface);border:1px solid var(--border);color:var(--danger);margin-top:24px">
+    Logout
+  </button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -679,10 +678,13 @@ function showPage(p) {
     const el = document.getElementById('page-' + x);
     if (el) el.style.display = x === p ? 'block' : 'none';
   });
+  // Nascondi header se siamo sul login
+  document.querySelector('header').style.display = p === 'login' ? 'none' : 'flex';
+  
   document.querySelectorAll('.nav-tabs button').forEach((b, i) => {
     b.classList.toggle('active', ['home', 'quiz', 'db', 'profile'][i] === p);
   });
-  if (p === 'home') renderHome();
+  if (p === 'home') { renderHome(); loadWords(); }
   if (p === 'db') { renderDB(); loadWords(); }
   if (p === 'profile') loadProfile();
 }
