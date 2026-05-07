@@ -8,7 +8,7 @@ async function loadProfile() {
     .order('played_at', { ascending: false });
 
   const { data: wrongWords } = await db.from('wrong_answers')
-    .select('count, word_id, words(eng, ita, cat)')
+    .select('count, word_id, words(eng, ita, list_id, lists(name))')
     .eq('user_id', currentUser.id)
     .order('count', { ascending: false })
     .limit(10);
@@ -39,13 +39,14 @@ function renderProfile(sessions, wrongWords) {
   `).join('') : '<div class="empty-state">Nessuna sessione ancora</div>';
 
   const wrongRows = wrongWords?.length ? wrongWords.map(w => `
-    <div class="result-row">
-      <div class="dot ko"></div>
-      <div style="font-family:var(--mono);font-weight:700;min-width:120px">${w.words?.eng}</div>
-      <div style="color:var(--muted);font-size:13px;flex:1">${w.words?.ita}</div>
-      <div style="font-family:var(--mono);font-size:12px;color:var(--danger)">×${w.count}</div>
-    </div>
-  `).join('') : '<div class="empty-state">Nessun errore registrato</div>';
+  <div class="result-row">
+    <div class="dot ko"></div>
+    <div style="font-family:var(--mono);font-weight:700;min-width:120px">${w.words?.eng}</div>
+    <div style="color:var(--muted);font-size:13px;flex:1">${w.words?.ita}</div>
+    <div style="font-size:11px;color:var(--muted)">${w.words?.lists?.name || '—'}</div>
+    <div style="font-family:var(--mono);font-size:12px;color:var(--danger)">×${w.count}</div>
+  </div>
+`).join('') : '<div class="empty-state">Nessun errore registrato</div>';
 
   document.getElementById('profile-content').innerHTML = `
     <div class="stats-row" style="margin-bottom:20px">
