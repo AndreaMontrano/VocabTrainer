@@ -103,21 +103,31 @@ async function showResults(area) {
   const ok = quizResults.filter(r => r.ok).length;
 
   if (currentUser) {
-    await db.from('sessions').insert({
-      user_id: currentUser.id,
-      mode: selectedMode,
-      correct: ok,
-      wrong: tot - ok,
-      total: tot
-    });
+    // Rate limit: max 10 sessioni nell'ultimo minuto
+    const { count } = await db.from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', currentUser.id)
+      .gte('played_at', new Date(Date.now() - 60000).toISOString());
 
-    const wrongWords = quizResults.filter(r => !r.ok);
-    for (const r of wrongWords) {
-      await db.from('wrong_answers')
-        .upsert(
-          { user_id: currentUser.id, word_id: r.word.id, count: 1, last_seen: new Date() },
-          { onConflict: 'user_id,word_id', ignoreDuplicates: false }
-        );
+    if (count >= 10) {
+      console.warn('Troppi quiz in poco tempo, sessione non salvata');
+    } else {
+      await db.from('sessions').insert({
+        user_id: currentUser.id,
+        mode: selectedMode,
+        correct: ok,
+        wrong: tot - ok,
+        total: tot
+      });
+
+      const wrongWords = quizResults.filter(r => !r.ok);
+      for (const r of wrongWords) {
+        await db.from('wrong_answers')
+          .upsert(
+            { user_id: currentUser.id, word_id: r.word.id, count: 1, last_seen: new Date() },
+            { onConflict: 'user_id,word_id', ignoreDuplicates: false }
+          );
+      }
     }
   }
 
