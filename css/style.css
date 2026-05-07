@@ -427,3 +427,29 @@ background: none;
 color: var(--muted);
 }
 .cat-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ---- LISTE ---- */
+.list-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 10px;
+}
+.list-card:hover { border-color: var(--accent); background: var(--surface2); }
+.list-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.list-name {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+}
+.list-arrow { color: var(--accent); font-size: 16px; }
+.list-desc { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+.list-footer { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }

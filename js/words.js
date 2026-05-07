@@ -1,8 +1,10 @@
 // ── Carica parole ─────────────────────────────────────────
-async function loadWords() {
-  const { data, error } = await db.from('words').select('*').order('id');
-  if (error) console.error(error);
-  else words = data;
+async function loadWords(listId = null) {
+  let query = db.from('words').select('*').order('id');
+  if (listId) query = query.eq('list_id', listId);
+  const { data, error } = await query;
+  if (error) { console.error(error); return; }
+  words = data;
   renderHome();
   renderDB();
 }
