@@ -379,15 +379,7 @@ padding: 10px 14px;
 transition: border-color 0.1s;
 }
 .word-row:hover { border-color: var(--border); }
-.word-row .cat-badge {
-font-size: 10px;
-padding: 3px 8px;
-border-radius: 5px;
-font-weight: 600;
-text-transform: uppercase;
-letter-spacing: 0.5px;
-flex-shrink: 0;
-}
+
 .word-row .eng-w { font-family: var(--mono); font-size: 14px; font-weight: 700; min-width: 120px; }
 .word-row .ita-w { font-size: 13px; color: var(--muted); flex: 1; }
 .word-row .ctx-w { font-size: 11px; color: var(--border); font-style: italic; flex: 1; display: none; }
@@ -407,26 +399,6 @@ margin-left: auto;
 
 .empty-state { text-align: center; padding: 40px 0; color: var(--muted); font-size: 14px; }
 
-.cat-filter {
-display: flex;
-gap: 6px;
-flex-wrap: wrap;
-margin-bottom: 12px;
-}
-.cat-pill {
-font-size: 11px;
-padding: 4px 10px;
-border-radius: 20px;
-border: 1px solid var(--border);
-cursor: pointer;
-transition: all 0.1s;
-font-weight: 500;
-text-transform: uppercase;
-letter-spacing: 0.4px;
-background: none;
-color: var(--muted);
-}
-.cat-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* ---- LISTE ---- */
 .list-card {

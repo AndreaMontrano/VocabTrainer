@@ -38,7 +38,6 @@ function renderQuiz() {
       <div class="quiz-count">${quizIndex+1}/${quizWords.length}</div>
     </div>
     <div class="card-q">
-      <div class="category">${w.cat.toUpperCase()}</div>
       <div class="word">${question}</div>
       ${w.ctx ? `<div class="context">"${w.ctx}"</div>` : ''}
     </div>
