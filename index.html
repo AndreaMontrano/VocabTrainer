@@ -29,8 +29,13 @@
     <button onclick="switchAuthTab('register')" id="tab-register" class="btn-start" style="margin:0;background:var(--surface);border:1px solid var(--border);color:var(--muted)">Registrati</button>
   </div>
 
-  <input id="auth-email" class="answer-input" type="email" placeholder="Email" style="margin-bottom:10px;text-align:left;padding-left:16px">
-  <input id="auth-password" class="answer-input" type="password" placeholder="Password" style="margin-bottom:10px;text-align:left;padding-left:16px">
+  <input id="auth-name" class="answer-input" type="text" placeholder="Il tuo nome"
+    style="margin-bottom:10px;text-align:left;padding-left:16px;display:none">
+  <input id="auth-email" class="answer-input" type="email" placeholder="Email"
+    style="margin-bottom:10px;text-align:left;padding-left:16px">
+  <input id="auth-password" class="answer-input" type="password" placeholder="Password"
+    style="margin-bottom:10px;text-align:left;padding-left:16px">
+
   <div id="auth-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
   <button class="btn-start" id="auth-submit" onclick="handleAuth()">Accedi</button>
 
