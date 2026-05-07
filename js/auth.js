@@ -6,10 +6,6 @@ db.auth.getSession().then(({ data: { session } }) => {
   else showPage('login');
 });
 
-// Ascolta i cambiamenti di stato auth
-db.auth.onAuthStateChange((_event, session) => {
-  currentUser = session?.user ?? null;
-});
 
 // ── Login / Registrazione ─────────────────────────────────
 let authMode = 'login';

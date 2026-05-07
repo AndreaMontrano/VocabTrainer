@@ -1,12 +1,12 @@
 // ── Selezione modalità ────────────────────────────────────
-function selectMode(m) {
+/*function selectMode(m) {
   selectedMode = m;
   document.getElementById('card-ita').style.borderColor = m === 'ita-eng' ? 'var(--accent)' : 'transparent';
   document.getElementById('card-eng').style.borderColor = m === 'eng-ita' ? 'var(--accent)' : 'transparent';
   const btn = document.getElementById('btn-start-quiz');
   btn.disabled = false;
   btn.textContent = m === 'ita-eng' ? 'Inizia: Italiano → Inglese' : 'Inizia: Inglese → Italiano';
-}
+}*/
 
 // ── Avvio quiz ────────────────────────────────────────────
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }

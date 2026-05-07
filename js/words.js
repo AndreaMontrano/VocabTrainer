@@ -77,6 +77,3 @@ async function renderHome() {
     <div class="stat-card"><div class="num">${acc}%</div><div class="lbl">Accuracy</div></div>
   `;
 }
-
-// ── Avvio ─────────────────────────────────────────────────
-loadWords();

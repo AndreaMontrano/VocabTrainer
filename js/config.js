@@ -1,6 +1,3 @@
-window.onerror = function(msg, src, line, col, err) {
-  alert('ERRORE: ' + msg + '\nFile: ' + src + '\nRiga: ' + line);
-};
 // ── Supabase ──────────────────────────────────────────────
 const { createClient } = supabase;
 const db = createClient(
