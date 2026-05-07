@@ -19,6 +19,7 @@ function switchAuthTab(mode) {
   document.getElementById('auth-submit').textContent = mode === 'login' ? 'Accedi' : 'Registrati';
   document.getElementById('tab-login').style.background = mode === 'login' ? 'var(--accent)' : 'var(--surface)';
   document.getElementById('tab-register').style.background = mode === 'register' ? 'var(--accent)' : 'var(--surface)';
+  document.getElementById('auth-name').style.display = mode === 'register' ? 'block' : 'none';
 }
 
 async function handleAuth() {
@@ -27,12 +28,24 @@ async function handleAuth() {
   const errEl = document.getElementById('auth-error');
   errEl.style.display = 'none';
 
-  const fn = authMode === 'login'
-    ? db.auth.signInWithPassword({ email, password })
-    : db.auth.signUp({ email, password });
+  if (authMode === 'register') {
+    const name = document.getElementById('auth-name').value.trim();
+    if (!name) {
+      errEl.textContent = 'Inserisci il tuo nome';
+      errEl.style.display = 'block';
+      return;
+    }
+    const { data, error } = await db.auth.signUp({ email, password });
+    if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
 
-  const { error } = await fn;
-  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
+    // Salva il nome nel profilo
+    await db.from('profiles').insert({ id: data.user.id, name });
+
+  } else {
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
+  }
+
   showPage('home');
 }
 
@@ -50,9 +63,14 @@ async function logout() {
   showPage('login');
 }
 
-db.auth.onAuthStateChange((event, session) => {
+db.auth.onAuthStateChange(async (event, session) => {
   currentUser = session?.user ?? null;
-  if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+  if (event === 'SIGNED_IN') {
+    await loadUserProfile();
+    showPage('home');
+  }
+  if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+    userProfile = null;
     showPage('login');
   }
 });

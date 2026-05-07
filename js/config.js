@@ -30,3 +30,11 @@ function showPage(p) {
   if (p === 'db')      { renderDB(); loadWords(); }
   if (p === 'profile') { loadProfile(); }
 }
+
+let userProfile = null;
+
+async function loadUserProfile() {
+  if (!currentUser) return;
+  const { data } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  userProfile = data;
+}
