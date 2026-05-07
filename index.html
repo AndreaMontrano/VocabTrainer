@@ -12,6 +12,7 @@
   <div class="logo">vocab<span>.</span>trainer</div>
   <div class="nav-tabs">
     <button class="active" onclick="showPage('home')">Home</button>
+    <button onclick="showPage('lists')">Liste</button>
     <button onclick="showPage('db')">Database</button>
     <button onclick="showPage('profile')">Profilo</button>
   </div>
@@ -47,21 +48,17 @@
     <p>Allenati ogni giorno con le parole che hai scelto tu</p>
   </div>
   <div class="stats-row" id="stats-row"></div>
-  <div id="mode-select">
-    <div class="mode-cards">
-      <div class="mode-card" id="card-ita" onclick="selectMode('ita-eng')" style="border-color: transparent;">
-        <div class="icon">🇮🇹 → 🇬🇧</div>
-        <h3>ITA → ENG</h3>
-        <p>Ti viene mostrata la parola italiana, devi tradurla in inglese</p>
-      </div>
-      <div class="mode-card" id="card-eng" onclick="selectMode('eng-ita')" style="border-color: transparent;">
-        <div class="icon">🇬🇧 → 🇮🇹</div>
-        <h3>ENG → ITA</h3>
-        <p>Ti viene mostrata la parola inglese, devi tradurla in italiano</p>
-      </div>
-    </div>
-    <button class="btn-start" id="btn-start-quiz" onclick="startQuiz()" disabled>Scegli una modalità per iniziare</button>
+  <button class="btn-start" onclick="showPage('lists')">
+    Inizia ad allenarti →
+  </button>
+</div>
+
+<div class="container" id="page-lists" style="display:none">
+  <div class="home-hero">
+    <h1>Scegli una <span style="color:var(--accent)">lista</span></h1>
+    <p>Seleziona una lista per allenarti su un tema specifico</p>
   </div>
+  <div id="lists-grid"></div>
 </div>
 
 <div class="container" id="page-quiz" style="display:none">
@@ -112,6 +109,7 @@
 <script src="js/words.js"></script>
 <script src="js/quiz.js"></script>
 <script src="js/profile.js"></script>
+<script src="js/lists.js"></script>
 
 </body>
 </html>

@@ -13,6 +13,7 @@ let words = [];
 let selectedMode = null;
 let quizWords = [], quizIndex = 0, quizResults = [];
 let addFormOpen = false, selectedCat = 'all';
+let selectedList = null; // null = tutte le parole
 
 // ── Colori categorie ──────────────────────────────────────
 const CAT_COLORS = {
@@ -25,15 +26,16 @@ const CAT_COLORS = {
 
 // ── Navigazione ───────────────────────────────────────────
 function showPage(p) {
-  ['home', 'quiz', 'db', 'login', 'profile'].forEach(x => {
+  ['home', 'quiz', 'db', 'login', 'profile', 'lists'].forEach(x => {
     const el = document.getElementById('page-' + x);
     if (el) el.style.display = x === p ? 'block' : 'none';
   });
   document.querySelector('header').style.display = p === 'login' ? 'none' : 'flex';
   document.querySelectorAll('.nav-tabs button').forEach((b, i) => {
-    b.classList.toggle('active', ['home', 'db', 'profile'][i] === p);
+    b.classList.toggle('active', ['home', 'lists', 'db', 'profile'][i] === p);
   });
   if (p === 'home')    { renderHome(); loadWords(); }
-  if (p === 'db')      { renderDB();   loadWords(); }
+  if (p === 'lists')   { loadLists(); }
+  if (p === 'db')      { renderDB(); loadWords(); }
   if (p === 'profile') { loadProfile(); }
 }
