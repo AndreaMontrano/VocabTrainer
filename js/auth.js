@@ -49,3 +49,10 @@ async function logout() {
   await db.auth.signOut();
   showPage('login');
 }
+
+db.auth.onAuthStateChange((event, session) => {
+  currentUser = session?.user ?? null;
+  if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+    showPage('login');
+  }
+});
