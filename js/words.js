@@ -66,3 +66,26 @@ function toggleAddForm() {
   document.getElementById('add-form').classList.toggle('open', addFormOpen);
   if (addFormOpen) document.getElementById('f-eng').focus();
 }
+
+// ── Render home ───────────────────────────────────────────
+async function renderHome() {
+  const total = words.length;
+  let acc = 0;
+  if (currentUser) {
+    const { data } = await db.from('sessions')
+      .select('correct, wrong')
+      .eq('user_id', currentUser.id);
+    if (data?.length) {
+      const tot_c = data.reduce((s, r) => s + r.correct, 0);
+      const tot_w = data.reduce((s, r) => s + r.wrong, 0);
+      acc = tot_c + tot_w > 0 ? Math.round(tot_c / (tot_c + tot_w) * 100) : 0;
+    }
+  }
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="num">${total}</div><div class="lbl">Parole</div></div>
+    <div class="stat-card"><div class="num">${acc}%</div><div class="lbl">Accuracy</div></div>
+  `;
+}
+
+// ── Avvio ─────────────────────────────────────────────────
+loadWords();
