@@ -1,12 +1,3 @@
-// ── Inizializzazione sessione ─────────────────────────────
-// Controlla se l'utente è già loggato al caricamento
-db.auth.getSession().then(({ data: { session } }) => {
-  currentUser = session?.user ?? null;
-  if (currentUser) showPage('home');
-  else showPage('login');
-});
-
-
 // ── Login / Registrazione ─────────────────────────────────
 let authMode = 'login';
 
@@ -33,15 +24,13 @@ async function handleAuth() {
     }
     const { data, error } = await db.auth.signUp({ email, password });
     if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
-
-    // Salva il nome nel profilo
-    await db.from('profiles').insert({ id: data.user.id, name });
-
+    if (data?.user) {
+      await db.from('profiles').insert({ id: data.user.id, name });
+    }
   } else {
     const { error } = await db.auth.signInWithPassword({ email, password });
     if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
   }
-
   showPage('home');
 }
 
@@ -56,16 +45,30 @@ async function loginWithGoogle() {
 // ── Logout ────────────────────────────────────────────────
 async function logout() {
   await db.auth.signOut();
+  currentUser = null;
+  userProfile = null;
   showPage('login');
 }
 
-db.auth.onAuthStateChange(async (event, session) => {
+// ── Gestione sessione — UN SOLO listener ──────────────────
+db.auth.getSession().then(async ({ data: { session } }) => {
   currentUser = session?.user ?? null;
+  if (currentUser) {
+    await loadUserProfile();
+    showPage('home');
+  } else {
+    showPage('login');
+  }
+});
+
+db.auth.onAuthStateChange(async (event, session) => {
   if (event === 'SIGNED_IN') {
+    currentUser = session.user;
     await loadUserProfile();
     showPage('home');
   }
-  if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+  if (event === 'SIGNED_OUT') {
+    currentUser = null;
     userProfile = null;
     showPage('login');
   }
