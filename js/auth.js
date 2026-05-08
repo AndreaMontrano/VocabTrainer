@@ -65,6 +65,16 @@ db.auth.onAuthStateChange(async (event, session) => {
   if (event === 'SIGNED_IN') {
     currentUser = session.user;
     await loadUserProfile();
+
+    // Se il profilo non esiste ancora (es. primo login con Google) lo crea
+    if (!userProfile) {
+      const name = currentUser.user_metadata?.full_name
+        || currentUser.email?.split('@')[0]
+        || 'Utente';
+      await db.from('profiles').insert({ id: currentUser.id, name });
+      await loadUserProfile();
+    }
+
     showPage('home');
   }
   if (event === 'SIGNED_OUT') {
