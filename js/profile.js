@@ -18,7 +18,7 @@ async function loadProfile() {
 
 // ── Render profilo ────────────────────────────────────────
 function renderProfile(sessions, wrongWords) {
-  document.getElementById('profile-email').textContent = currentUser?.email || '';
+  document.getElementById('profile-email').textContent = userProfile?.name || currentUser?.email || '';
 
   const totalSessions = sessions?.length || 0;
   const totalCorrect = sessions?.reduce((s, r) => s + r.correct, 0) || 0;

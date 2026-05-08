@@ -58,9 +58,19 @@ function toggleAddForm() {
   if (addFormOpen) document.getElementById('f-eng').focus();
 }
 
-// ── Render home ───────────────────────────────────────────
 async function renderHome() {
-  const total = words.length;
+  // Saluto da profiles
+  const name = userProfile?.name || 'there';
+  const greetings = [
+    `Ciao ${name}, sei carico? 💪`,
+    `Bentornato ${name}! 🚀`,
+    `Pronto ad allenarti, ${name}? 🎯`,
+    `Ehi ${name}, si impara! 📚`,
+  ];
+  const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+  document.getElementById('home-greeting').innerHTML = greeting;
+
+  // Stats
   let acc = 0;
   if (currentUser) {
     const { data } = await db.from('sessions')
@@ -73,7 +83,7 @@ async function renderHome() {
     }
   }
   document.getElementById('stats-row').innerHTML = `
-    <div class="stat-card"><div class="num">${total}</div><div class="lbl">Parole</div></div>
+    <div class="stat-card"><div class="num">${words.length}</div><div class="lbl">Parole</div></div>
     <div class="stat-card"><div class="num">${acc}%</div><div class="lbl">Accuracy</div></div>
   `;
 }
