@@ -23,7 +23,6 @@ function renderLists(lists) {
     </div>
   `).join('');
 
-  // Carica il conteggio parole per ogni lista
   lists.forEach(l => loadListCount(l.id));
 }
 
@@ -36,10 +35,12 @@ async function loadListCount(listId) {
 }
 
 // ── Selezione lista → pagina dettaglio ────────────────────
+// FIX #7: loadWords() non chiama più renderDB() né renderHome(),
+// quindi non ci sono più side effects quando siamo sulla pagina liste.
 async function selectList(listId, listName) {
   selectedList = { id: listId, name: listName };
-  await loadWords(listId);
-  renderListDetail(listName);
+  await loadWords(listId);           // carica solo le parole della lista
+  renderListDetail(listName);        // poi mostra il dettaglio (words è già pronto)
 }
 
 function renderListDetail(listName) {
