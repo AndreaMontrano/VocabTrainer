@@ -17,6 +17,7 @@
   </div>
 </header>
 
+<!-- LOGIN -->
 <div class="container" id="page-login" style="display:none">
   <div class="home-hero">
     <h1>vocab<span style="color:var(--accent)">.</span>trainer</h1>
@@ -46,9 +47,11 @@
   </div>
 </div>
 
+<!-- HOME -->
+<!-- FIX #1: aggiunto id="home-greeting" all'h1 (era mancante → crash in renderHome) -->
 <div class="container" id="page-home">
   <div class="home-hero">
-    <h1>Level up your <span style="color:var(--accent)">English</span></h1>
+    <h1 id="home-greeting">Level up your <span style="color:var(--accent)">English</span></h1>
     <p>Allenati ogni giorno con le parole che hai scelto tu</p>
   </div>
   <div class="stats-row" id="stats-row"></div>
@@ -57,6 +60,7 @@
   </button>
 </div>
 
+<!-- LISTE -->
 <div class="container" id="page-lists" style="display:none">
   <div class="home-hero">
     <h1>Scegli una <span style="color:var(--accent)">lista</span></h1>
@@ -65,39 +69,26 @@
   <div id="lists-grid"></div>
 </div>
 
+<!-- QUIZ -->
 <div class="container" id="page-quiz" style="display:none">
   <div id="quiz-area"></div>
 </div>
 
-<div class="container" id="page-db" style="display:none">
-  <div class="db-toolbar">
-    <input class="db-search" id="db-search" placeholder="Cerca parola..." oninput="renderDB()">
-    <button class="btn-add" onclick="toggleAddForm()">+ Aggiungi</button>
-  </div>
-
-  <div class="add-form" id="add-form">
-    <input id="f-eng" placeholder="Inglese (es. milestone)" />
-    <input id="f-ita" placeholder="Italiano (es. traguardo)" />
-    <input id="f-ctx" placeholder="Contesto (opzionale)" />
-    <div class="form-actions">
-      <button class="btn-save" onclick="addWord()">Salva</button>
-      <button class="btn-cancel" onclick="toggleAddForm()">Annulla</button>
-    </div>
-  </div>
-
-  <div class="word-list" id="word-list"></div>
-</div>
+<!-- PROFILO -->
 <div class="container" id="page-profile" style="display:none">
   <div class="home-hero">
     <h1>Il tuo <span style="color:var(--accent)">profilo</span></h1>
     <p id="profile-email" style="color:var(--muted)"></p>
   </div>
   <div id="profile-content"></div>
-  <button class="btn-start" onclick="logout()" 
+  <button class="btn-start" onclick="logout()"
     style="background:var(--surface);border:1px solid var(--border);color:var(--danger);margin-top:24px">
     Logout
   </button>
 </div>
+
+<!-- FIX #6: rimosso page-db (era codice morto: nessuna tab di navigazione,
+     nessun caso in showPage(), causava renderDB() inutili ad ogni loadWords) -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
