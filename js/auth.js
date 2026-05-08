@@ -1,5 +1,6 @@
 // ── Login / Registrazione ─────────────────────────────────
 let authMode = 'login';
+let authInitialized = false;
 
 function switchAuthTab(mode) {
   authMode = mode;
@@ -31,7 +32,6 @@ async function handleAuth() {
     const { error } = await db.auth.signInWithPassword({ email, password });
     if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
   }
-  showPage('home');
 }
 
 // ── Google OAuth ──────────────────────────────────────────
@@ -45,28 +45,32 @@ async function loginWithGoogle() {
 // ── Logout ────────────────────────────────────────────────
 async function logout() {
   await db.auth.signOut();
-  currentUser = null;
-  userProfile = null;
-  showPage('login');
 }
 
-// ── Gestione sessione — UN SOLO listener ──────────────────
-db.auth.getSession().then(async ({ data: { session } }) => {
-  currentUser = session?.user ?? null;
-  if (currentUser) {
-    await loadUserProfile();
-    showPage('home');
-  } else {
-    showPage('login');
-  }
-});
-
+// ── Gestione sessione — unico punto di controllo ──────────
 db.auth.onAuthStateChange(async (event, session) => {
+  console.log('Auth event:', event);
+
+  if (event === 'INITIAL_SESSION') {
+    if (session?.user) {
+      currentUser = session.user;
+      await loadUserProfile();
+      if (!userProfile) {
+        const name = currentUser.user_metadata?.full_name
+          || currentUser.email?.split('@')[0]
+          || 'Utente';
+        await db.from('profiles').insert({ id: currentUser.id, name });
+        await loadUserProfile();
+      }
+      showPage('home');
+    } else {
+      showPage('login');
+    }
+  }
+
   if (event === 'SIGNED_IN') {
     currentUser = session.user;
     await loadUserProfile();
-
-    // Se il profilo non esiste ancora (es. primo login con Google) lo crea
     if (!userProfile) {
       const name = currentUser.user_metadata?.full_name
         || currentUser.email?.split('@')[0]
@@ -74,9 +78,9 @@ db.auth.onAuthStateChange(async (event, session) => {
       await db.from('profiles').insert({ id: currentUser.id, name });
       await loadUserProfile();
     }
-
     showPage('home');
   }
+
   if (event === 'SIGNED_OUT') {
     currentUser = null;
     userProfile = null;
