@@ -70,7 +70,7 @@ function checkAnswer() {
   const userAns = inp.value.trim();
   if (!userAns) return;
 
-  const correctVariants = correct.split(',').map(s => normalize(s.trim()));
+  const correctVariants = correct.split(/,|\//).map(s => normalize(s.trim())).filter(Boolean);
   const ok = correctVariants.some(v => normalize(userAns) === v);
 
   const fb = document.getElementById('feedback');
