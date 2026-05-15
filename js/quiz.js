@@ -62,9 +62,6 @@ function normalize(s) {
 }
 
 // ── Controllo risposta ────────────────────────────────────
-// FIX #10: rimossa la logica includes() troppo permissiva.
-// Ora viene accettata solo la corrispondenza esatta (dopo normalizzazione).
-// Le varianti multiple separate da virgola continuano a funzionare.
 function checkAnswer() {
   const w      = quizWords[quizIndex];
   const isIE   = selectedMode === 'ita-eng';
@@ -110,17 +107,28 @@ async function showResults(area) {
     if (count >= 10) {
       console.warn('Troppi quiz in poco tempo, sessione non salvata');
     } else {
+      // Salva sessione con list_id
       await db.from('sessions').insert({
         user_id: currentUser.id,
         mode:    selectedMode,
+        list_id: selectedList?.id || null,   // ← NUOVO
         correct: ok,
         wrong:   tot - ok,
         total:   tot
       });
 
-      // FIX #4: il contatore delle risposte sbagliate ora viene incrementato
-      // correttamente. Prima faceva sempre upsert con count=1.
-      // Ora legge il valore attuale e lo incrementa di 1.
+      // Marca tutte le parole come viste (upsert: non sovrascrive first_seen_at se già esiste)
+      if (quizResults.length > 0) {
+        const seenRows = quizResults.map(r => ({
+          user_id:  currentUser.id,
+          word_id:  r.word.id,
+          list_id:  r.word.list_id
+        }));
+        await db.from('user_word_seen')
+          .upsert(seenRows, { onConflict: 'user_id,word_id', ignoreDuplicates: true });
+      }
+
+      // Incrementa contatore parole sbagliate
       const wrongWords = quizResults.filter(r => !r.ok);
       for (const r of wrongWords) {
         const { data: existing } = await db.from('wrong_answers')
