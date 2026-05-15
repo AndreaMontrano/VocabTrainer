@@ -19,28 +19,63 @@ function renderLists(lists) {
         <span class="list-arrow">→</span>
       </div>
       ${l.description ? `<div class="list-desc">${l.description}</div>` : ''}
-      <div class="list-footer" id="list-count-${l.id}">Caricamento...</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <div class="list-footer" id="list-count-${l.id}">Caricamento...</div>
+        <div style="font-size:11px;color:var(--accent2);font-family:var(--mono)" id="list-seen-${l.id}"></div>
+      </div>
+      <div style="margin-top:8px;height:3px;background:var(--border);border-radius:2px;overflow:hidden">
+        <div id="list-progress-${l.id}"
+          style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 0.5s ease"></div>
+      </div>
     </div>
   `).join('');
 
-  lists.forEach(l => loadListCount(l.id));
+  lists.forEach(l => loadListStats(l.id));
 }
 
-async function loadListCount(listId) {
-  const { count } = await db.from('words')
+// ── Carica stats per singola lista (count + progresso) ────
+async function loadListStats(listId) {
+  // Totale parole nella lista
+  const { count: total } = await db.from('words')
     .select('*', { count: 'exact', head: true })
     .eq('list_id', listId);
-  const el = document.getElementById(`list-count-${listId}`);
-  if (el) el.textContent = `${count ?? 0} parole`;
+
+  const countEl    = document.getElementById(`list-count-${listId}`);
+  const progressEl = document.getElementById(`list-progress-${listId}`);
+  const seenEl     = document.getElementById(`list-seen-${listId}`);
+
+  if (countEl) countEl.textContent = `${total ?? 0} parole`;
+
+  // Parole viste dall'utente per questa lista
+  if (currentUser && total > 0) {
+    const { count: seen } = await db.from('user_word_seen')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', currentUser.id)
+      .eq('list_id', listId);
+
+    const seenCount = seen ?? 0;
+    const pct = Math.round(seenCount / total * 100);
+
+    if (progressEl) progressEl.style.width = `${pct}%`;
+
+    if (seenEl) {
+      if (seenCount === 0) {
+        seenEl.textContent = '';
+      } else if (seenCount >= total) {
+        seenEl.textContent = '✓ completata';
+        seenEl.style.color = 'var(--success)';
+      } else {
+        seenEl.textContent = `${seenCount}/${total} viste`;
+      }
+    }
+  }
 }
 
 // ── Selezione lista → pagina dettaglio ────────────────────
-// FIX #7: loadWords() non chiama più renderDB() né renderHome(),
-// quindi non ci sono più side effects quando siamo sulla pagina liste.
 async function selectList(listId, listName) {
   selectedList = { id: listId, name: listName };
-  await loadWords(listId);           // carica solo le parole della lista
-  renderListDetail(listName);        // poi mostra il dettaglio (words è già pronto)
+  await loadWords(listId);
+  renderListDetail(listName);
 }
 
 function renderListDetail(listName) {
