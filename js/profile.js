@@ -72,7 +72,10 @@ function renderProfile(sessions, wrongWords) {
     : '<div class="empty-state">Completa almeno un quiz da una lista per vedere il breakdown</div>';
 
   // ── Storico sessioni ───────────────────────────────────
-  const sessionRows = sessions?.length ? sessions.map(s => `
+  const SESS_LIMIT  = 5;
+  const allSessions = sessions ?? [];
+
+  const sessionPreviewRows = allSessions.slice(0, SESS_LIMIT).map(s => `
     <div class="result-row">
       <div class="dot ok"></div>
       <div style="flex:1;font-size:13px">${new Date(s.played_at).toLocaleDateString('it-IT')}</div>
@@ -85,17 +88,72 @@ function renderProfile(sessions, wrongWords) {
         <span style="color:var(--muted)">/${s.total}</span>
       </div>
     </div>
-  `).join('') : '<div class="empty-state">Nessuna sessione ancora</div>';
+  `).join('');
+
+  const sessionExtraRows = allSessions.slice(SESS_LIMIT).map(s => `
+    <div class="result-row">
+      <div class="dot ok"></div>
+      <div style="flex:1;font-size:13px">${new Date(s.played_at).toLocaleDateString('it-IT')}</div>
+      ${s.lists?.name
+        ? `<div style="font-size:12px;color:var(--accent2);font-family:var(--mono)">${s.lists.name}</div>`
+        : ''}
+      <div style="font-size:12px;color:var(--muted);margin-left:8px">${s.mode}</div>
+      <div style="font-family:var(--mono);font-size:13px;margin-left:auto">
+        <span style="color:var(--success)">${s.correct}</span>
+        <span style="color:var(--muted)">/${s.total}</span>
+      </div>
+    </div>
+  `).join('');
+
+  const sessionsHTML = allSessions.length
+    ? `
+      ${sessionPreviewRows}
+      ${sessionExtraRows
+        ? `<div id="extra-sessions" style="display:none">${sessionExtraRows}</div>
+           <button class="btn-skip" id="btn-toggle-sessions"
+             onclick="toggleExtra('sessions', ${allSessions.length - SESS_LIMIT})"
+             style="width:100%;margin-top:8px;text-align:center">
+             Mostra altre ${allSessions.length - SESS_LIMIT} sessioni ↓
+           </button>`
+        : ''}
+    `
+    : '<div class="empty-state">Nessuna sessione ancora</div>';
 
   // ── Parole più sbagliate ───────────────────────────────
-  const wrongRows = wrongWords?.length ? wrongWords.map(w => `
+  const WRONG_LIMIT   = 5;
+  const allWrong      = wrongWords ?? [];
+
+  const wrongPreviewRows = allWrong.slice(0, WRONG_LIMIT).map(w => `
     <div class="result-row">
-        <div class="dot ko"></div>
-        <div style="font-family:var(--mono);font-weight:700;min-width:120px">${w.words?.eng}</div>
-        <div style="color:var(--muted);font-size:13px;flex:1">${w.words?.ita}</div>
-        <div style="font-family:var(--mono);font-size:12px;color:var(--danger)">×${w.count}</div>
+      <div class="dot ko"></div>
+      <div style="font-family:var(--mono);font-weight:700;min-width:120px">${w.words?.eng}</div>
+      <div style="color:var(--muted);font-size:13px;flex:1">${w.words?.ita}</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--danger)">×${w.count}</div>
     </div>
-    `).join('') : '<div class="empty-state">Nessun errore registrato</div>';
+  `).join('');
+
+  const wrongExtraRows = allWrong.slice(WRONG_LIMIT).map(w => `
+    <div class="result-row">
+      <div class="dot ko"></div>
+      <div style="font-family:var(--mono);font-weight:700;min-width:120px">${w.words?.eng}</div>
+      <div style="color:var(--muted);font-size:13px;flex:1">${w.words?.ita}</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--danger)">×${w.count}</div>
+    </div>
+  `).join('');
+
+  const wrongHTML = allWrong.length
+    ? `
+      ${wrongPreviewRows}
+      ${wrongExtraRows
+        ? `<div id="extra-wrong" style="display:none">${wrongExtraRows}</div>
+           <button class="btn-skip" id="btn-toggle-wrong"
+             onclick="toggleExtra('wrong', ${allWrong.length - WRONG_LIMIT})"
+             style="width:100%;margin-top:8px;text-align:center">
+             Mostra altre ${allWrong.length - WRONG_LIMIT} parole ↓
+           </button>`
+        : ''}
+    `
+    : '<div class="empty-state">Nessun errore registrato</div>';
 
   document.getElementById('profile-content').innerHTML = `
     <div class="stats-row" style="margin-bottom:20px">
@@ -108,9 +166,23 @@ function renderProfile(sessions, wrongWords) {
     <div class="results-list" style="margin-bottom:24px">${listBreakdownRows}</div>
 
     <p style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:10px">STORICO SESSIONI</p>
-    <div class="results-list" style="margin-bottom:24px">${sessionRows}</div>
+    <div class="results-list" style="margin-bottom:24px">${sessionsHTML}</div>
 
     <p style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:10px">PAROLE PIÙ SBAGLIATE</p>
-    <div class="results-list">${wrongRows}</div>
+    <div class="results-list">${wrongHTML}</div>
   `;
+}
+
+// ── Toggle espandi/collassa sezioni profilo ───────────────
+function toggleExtra(section, count) {
+  const extraEl  = document.getElementById(`extra-${section}`);
+  const btnEl    = document.getElementById(`btn-toggle-${section}`);
+  const isHidden = extraEl.style.display === 'none';
+
+  extraEl.style.display = isHidden ? 'contents' : 'none';
+  btnEl.textContent = isHidden
+    ? 'Mostra meno ↑'
+    : (section === 'sessions'
+        ? `Mostra altre ${count} sessioni ↓`
+        : `Mostra altre ${count} parole ↓`);
 }
